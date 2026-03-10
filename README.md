@@ -163,6 +163,130 @@ pydantic-settings    # Configuration management
 
 ---
 
+## Tool Calling System
+
+![Tool Detailed Flow](tool_detailed.png)
+
+### Available Tools (13 Total)
+
+#### 1. Call Management Tools
+
+**start_call(phone_number)**
+```python
+Purpose: Initialize call tracking, check for existing patient
+When: At beginning after collecting phone number
+Returns: {result, patient_id?, patient_name?, message}
+```
+
+**end_call(outcome, summary)**
+```python
+Purpose: Mark call complete, save transcript
+When: At call end
+Outcomes: "completed", "abandoned", "failed", "error"
+Returns: {result, outcome, transcript_saved, message}
+```
+
+#### 2. Validation Tools
+
+**validate_field(field_name, field_value)**
+```python
+Purpose: Real-time field validation using Pydantic schemas
+When: After collecting each field
+Example: validate_field("phone_number", "5551234567")
+Returns: {valid, field_name, error?, message}
+
+Validates:
+- phone_number: 10 digits, US format
+- date_of_birth: MM/DD/YYYY, past date
+- email: Valid email format
+- state: 2-letter abbreviation
+- zip_code: 5-digit or ZIP+4
+- sex: Male/Female/Other/Decline to Answer
+```
+
+**check_duplicate(phone_number)**
+```python
+Purpose: Check if patient exists with this phone
+When: After collecting phone number
+Returns: {duplicate, patient_id?, existing_name?, message}
+
+If duplicate found:
+- Sets session.is_update = True
+- Stores patient_id for update flow
+```
+
+#### 3. Data Management Tools
+
+**update_field(field_name, field_value)**
+```python
+Purpose: Update single field when caller makes correction
+When: User says "Actually, it's..." or "I meant..."
+Example: "Actually my last name is Davis, not Davies"
+Returns: {result, field_name, field_value, message}
+```
+
+**get_progress()**
+```python
+Purpose: Check collection progress
+When: Periodically during conversation
+Returns: {
+    progress_percentage,
+    required_fields_collected,
+    required_fields_total,
+    missing_required_fields,
+    optional_fields_collected,
+    ready_for_confirmation,
+    message
+}
+```
+
+#### 4. Confirmation Tools
+
+**confirm_ready()**
+```python
+Purpose: Validate all required fields collected
+When: Before reading back information
+Returns: {result, ready, missing_fields?, message}
+
+Required fields:
+- first_name, last_name
+- date_of_birth, sex
+- phone_number
+- address_line_1, city, state, zip_code
+```
+
+**confirm_completed()**
+```python
+Purpose: Mark user confirmed all information correct
+When: After user says "yes" to confirmation question
+Returns: {result, confirmed, message}
+
+CRITICAL: Must be called before save_patient()
+```
+
+#### 5. Database Tools
+
+**save_patient(all_fields)**
+```python
+Purpose: Create new patient record
+When: ONLY after confirm_completed() succeeds
+Idempotency: Checks draft.idempotency_key
+Returns: {result, patient_id, message}
+
+Validation:
+- All required fields present
+- Confirmation completed
+- Not already saved (idempotency)
+```
+
+**update_patient(patient_id, fields)**
+```python
+Purpose: Update existing patient record
+When: Duplicate detected and user wants to update
+Idempotency: Checks draft.idempotency_key
+Returns: {result, patient_id, message}
+```
+
 ## Data Flow
 
 ### Complete Call Flow Sequence
@@ -493,129 +617,6 @@ Total: 2.2-2.5 seconds (perceived as natural)
 
 ---
 
-## Tool Calling System
-
-![Tool Detailed Flow](tool_detailed.png)
-
-### Available Tools (13 Total)
-
-#### 1. Call Management Tools
-
-**start_call(phone_number)**
-```python
-Purpose: Initialize call tracking, check for existing patient
-When: At beginning after collecting phone number
-Returns: {result, patient_id?, patient_name?, message}
-```
-
-**end_call(outcome, summary)**
-```python
-Purpose: Mark call complete, save transcript
-When: At call end
-Outcomes: "completed", "abandoned", "failed", "error"
-Returns: {result, outcome, transcript_saved, message}
-```
-
-#### 2. Validation Tools
-
-**validate_field(field_name, field_value)**
-```python
-Purpose: Real-time field validation using Pydantic schemas
-When: After collecting each field
-Example: validate_field("phone_number", "5551234567")
-Returns: {valid, field_name, error?, message}
-
-Validates:
-- phone_number: 10 digits, US format
-- date_of_birth: MM/DD/YYYY, past date
-- email: Valid email format
-- state: 2-letter abbreviation
-- zip_code: 5-digit or ZIP+4
-- sex: Male/Female/Other/Decline to Answer
-```
-
-**check_duplicate(phone_number)**
-```python
-Purpose: Check if patient exists with this phone
-When: After collecting phone number
-Returns: {duplicate, patient_id?, existing_name?, message}
-
-If duplicate found:
-- Sets session.is_update = True
-- Stores patient_id for update flow
-```
-
-#### 3. Data Management Tools
-
-**update_field(field_name, field_value)**
-```python
-Purpose: Update single field when caller makes correction
-When: User says "Actually, it's..." or "I meant..."
-Example: "Actually my last name is Davis, not Davies"
-Returns: {result, field_name, field_value, message}
-```
-
-**get_progress()**
-```python
-Purpose: Check collection progress
-When: Periodically during conversation
-Returns: {
-    progress_percentage,
-    required_fields_collected,
-    required_fields_total,
-    missing_required_fields,
-    optional_fields_collected,
-    ready_for_confirmation,
-    message
-}
-```
-
-#### 4. Confirmation Tools
-
-**confirm_ready()**
-```python
-Purpose: Validate all required fields collected
-When: Before reading back information
-Returns: {result, ready, missing_fields?, message}
-
-Required fields:
-- first_name, last_name
-- date_of_birth, sex
-- phone_number
-- address_line_1, city, state, zip_code
-```
-
-**confirm_completed()**
-```python
-Purpose: Mark user confirmed all information correct
-When: After user says "yes" to confirmation question
-Returns: {result, confirmed, message}
-
-CRITICAL: Must be called before save_patient()
-```
-
-#### 5. Database Tools
-
-**save_patient(all_fields)**
-```python
-Purpose: Create new patient record
-When: ONLY after confirm_completed() succeeds
-Idempotency: Checks draft.idempotency_key
-Returns: {result, patient_id, message}
-
-Validation:
-- All required fields present
-- Confirmation completed
-- Not already saved (idempotency)
-```
-
-**update_patient(patient_id, fields)**
-```python
-Purpose: Update existing patient record
-When: Duplicate detected and user wants to update
-Idempotency: Checks draft.idempotency_key
-Returns: {result, patient_id, message}
-```
 
 #### 6. Utility Tools
 
