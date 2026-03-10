@@ -495,6 +495,8 @@ Total: 2.2-2.5 seconds (perceived as natural)
 
 ## Tool Calling System
 
+![Tool Detailed Flow](tool_detailed.png)
+
 ### Available Tools (13 Total)
 
 #### 1. Call Management Tools
