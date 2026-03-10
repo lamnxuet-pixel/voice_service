@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Patient Registration - Pipecat Client</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #1a202c;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status-card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .status-text {
+            font-size: 16px;
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-danger {
+            background: #fc8181;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .transcript {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .message.user {
+            background: #e6f2ff;
+            text-align: right;
+        }
+
+        .message.assistant {
+            background: #f0f0f0;
+        }
+
+        .error {
+            background: #fff5f5;
+            border: 1px solid #fc8181;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Voice Patient Registration</h1>
+        <p class="subtitle">Powered by Pipecat AI</p>
+
+        <div class="status-card">
+            <div class="status-icon" id="statusIcon">🎤</div>
+            <div class="status-text" id="statusText">Ready to start</div>
+        </div>
+
+        <button class="btn btn-primary" id="startBtn" onclick="startCall()">
+            Start Voice Registration
+        </button>
+
+        <button class="btn btn-danger" id="endBtn" onclick="endCall()" style="display:none">
+            End Call
+        </button>
+
+        <div class="transcript" id="transcript" style="display:none"></div>
+
+        <div id="errorBox" class="error" style="display:none"></div>
+    </div>
+
+    <!-- Pipecat Client SDK -->
+    <script type="module">
+        import { PipecatClient } from 'https://cdn.jsdelivr.net/npm/@pipecat-ai/client-js@latest/dist/index.js';
+        import { WebSocketTransport } from 'https://cdn.jsdelivr.net/npm/@pipecat-ai/websocket-transport@latest/dist/index.js';
+
+        let pcClient = null;
+
+        window.startCall = async function() {
+            const startBtn = document.getElementById('startBtn');
+            const endBtn = document.getElementById('endBtn');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            const transcript = document.getElementById('transcript');
+            const errorBox = document.getElementById('errorBox');
+
+            try {
+                startBtn.disabled = true;
+                statusIcon.textContent = '⏳';
+                statusText.textContent = 'Connecting...';
+                errorBox.style.display = 'none';
+                transcript.style.display = 'block';
+                transcript.innerHTML = '';
+
+                // Create Pipecat client with WebSocket transport
+                pcClient = new PipecatClient({
+                    transport: new WebSocketTransport({
+                        recorderSampleRate: 16000,
+                        playerSampleRate: 16000,
+                    }),
+                    enableCam: false,
+                    enableMic: true,
+                    callbacks: {
+                        onConnected: () => {
+                            console.log('Connected to Pipecat');
+                            statusIcon.textContent = '🎙️';
+                            statusText.textContent = 'Connected! Speak naturally';
+                            startBtn.style.display = 'none';
+                            endBtn.style.display = 'block';
+                        },
+                        onDisconnected: () => {
+                            console.log('Disconnected from Pipecat');
+                            cleanup();
+                        },
+                        onUserTranscript: (text) => {
+                            console.log('User:', text);
+                            addMessage('user', text);
+                        },
+                        onBotTranscript: (text) => {
+                            console.log('Bot:', text);
+                            addMessage('assistant', text);
+                        },
+                        onError: (error) => {
+                            console.error('Pipecat error:', error);
+                            showError('Connection error: ' + error.message);
+                        },
+                    },
+                });
+
+                // Connect to WebSocket server
+                await pcClient.connect({
+                    wsUrl: 'ws://localhost:8765',
+                });
+
+            } catch (error) {
+                console.error('Failed to start call:', error);
+                showError('Failed to start call: ' + error.message);
+                startBtn.disabled = false;
+                statusIcon.textContent = '❌';
+                statusText.textContent = 'Connection failed';
+            }
+        };
+
+        window.endCall = async function() {
+            if (pcClient) {
+                await pcClient.disconnect();
+            }
+            cleanup();
+        };
+
+        function addMessage(role, text) {
+            const transcript = document.getElementById('transcript');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.textContent = text;
+            transcript.appendChild(messageDiv);
+            transcript.scrollTop = transcript.scrollHeight;
+        }
+
+        function cleanup() {
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('endBtn').style.display = 'none';
+            document.getElementById('statusIcon').textContent = '✅';
+            document.getElementById('statusText').textContent = 'Call ended';
+        }
+
+        function showError(message) {
+            const errorBox = document.getElementById('errorBox');
+            errorBox.textContent = message;
+            errorBox.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

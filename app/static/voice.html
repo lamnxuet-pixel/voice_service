@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Patient Registration - Test Call</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            flex: 0 0 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .transcript-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            flex: 1;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            max-height: 700px;
+        }
+
+        .transcript-header {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .transcript-messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .transcript-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .transcript-messages::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        .transcript-messages::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .transcript-messages::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .message.assistant {
+            background: #f1f5f9;
+            color: #1a202c;
+            align-self: flex-start;
+            border: 1px solid #e2e8f0;
+        }
+
+        .message-role {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            opacity: 0.8;
+        }
+
+        .message.user .message-role {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .message.assistant .message-role {
+            color: #667eea;
+        }
+
+        .message-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .transcript-empty {
+            text-align: center;
+            color: #94a3b8;
+            padding: 40px 20px;
+            font-size: 14px;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #1a202c;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status-card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .status-text {
+            font-size: 16px;
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        .status-subtext {
+            font-size: 13px;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-danger {
+            background: #fc8181;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-danger:hover {
+            background: #f56565;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .info-box {
+            background: #edf2f7;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        .info-box strong {
+            color: #2d3748;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fff5f5;
+            border: 1px solid #fc8181;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .container {
+                flex: 1;
+            }
+            .transcript-panel {
+                max-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="container">
+            <h1>🏥 Voice Patient Registration</h1>
+            <p class="subtitle">Test the AI-powered patient intake system</p>
+
+            <div class="status-card">
+                <div class="status-icon" id="statusIcon">🎤</div>
+                <div class="status-text" id="statusText">Ready to start</div>
+                <div class="status-subtext" id="statusSubtext">Click below to begin your registration</div>
+            </div>
+
+            <button class="btn btn-primary" id="startBtn" onclick="startCall()">
+                Start Voice Registration
+            </button>
+
+            <button class="btn btn-danger" id="endBtn" onclick="endCall()" style="display:none">
+                End Call
+            </button>
+
+            <div class="info-box">
+                <strong>How it works:</strong><br>
+                1. Click "Start Voice Registration"<br>
+                2. Allow microphone access when prompted<br>
+                3. Speak naturally with Alex, our AI coordinator<br>
+                4. Your information will be saved automatically
+            </div>
+
+            <div id="errorBox" class="error" style="display:none"></div>
+        </div>
+
+        <div class="transcript-panel">
+            <div class="transcript-header">💬 Live Transcript</div>
+            <div class="transcript-messages" id="transcriptMessages">
+                <div class="transcript-empty">
+                    Conversation transcript will appear here once you start the call...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let websocket = null;
+        let callId = null;
+        let mediaRecorder = null;
+        let audioContext = null;
+        let audioQueue = [];
+        let isPlaying = false;
+        let nextPlayTime = 0; // For gapless playback
+
+        // Test if audio playback works at all
+        function testAudioPlayback() {
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                // Create a simple beep
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 440; // A4 note
+                gainNode.gain.value = 0.1; // Low volume
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1); // 100ms beep
+                
+                console.log('Test beep played - if you heard it, audio system works!');
+            } catch (err) {
+                console.error('Audio test failed:', err);
+            }
+        }
+
+        async function processAudioQueue() {
+            if (isPlaying || audioQueue.length === 0) {
+                return;
+            }
+
+            isPlaying = true;
+            const audioBlob = audioQueue.shift();
+
+            try {
+                const duration = await playAudioScheduled(audioBlob);
+                // Small delay to prevent overlap
+                await new Promise(resolve => setTimeout(resolve, 10));
+            } catch (err) {
+                console.error('Error in audio queue processing:', err);
+            }
+
+            isPlaying = false;
+            
+            // Process next chunk
+            if (audioQueue.length > 0) {
+                processAudioQueue();
+            }
+        }
+
+        async function startCall() {
+            const startBtn = document.getElementById('startBtn');
+            const endBtn = document.getElementById('endBtn');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            const statusSubtext = document.getElementById('statusSubtext');
+            const errorBox = document.getElementById('errorBox');
+
+            try {
+                // Clear transcript
+                clearTranscript();
+
+                // Disable button and show loading
+                startBtn.disabled = true;
+                statusIcon.innerHTML = '<div class="loading"></div>';
+                statusText.textContent = 'Connecting...';
+                statusSubtext.textContent = 'Setting up your call';
+                errorBox.style.display = 'none';
+
+                // Request call credentials from backend
+                const response = await fetch('/voice/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to start call');
+                }
+
+                const data = await response.json();
+                callId = data.call_id;
+
+                // Request microphone access
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                // Connect to WebSocket
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}${data.ws_url}`;
+                websocket = new WebSocket(wsUrl);
+                websocket.binaryType = 'blob'; // Ensure binary data is received as Blob
+
+                websocket.onopen = () => {
+                    console.log('WebSocket connected');
+                    console.log('WebSocket ready state:', websocket.readyState);
+                    console.log('WebSocket binary type:', websocket.binaryType);
+                    statusIcon.textContent = '🎙️';
+                    statusText.textContent = 'Connected!';
+                    statusSubtext.textContent = 'Speak naturally with Alex';
+                    startBtn.style.display = 'none';
+                    endBtn.style.display = 'block';
+
+                    // Test audio playback with a beep
+                    testAudioPlayback();
+
+                    // Start streaming audio
+                    startAudioStreaming(stream);
+                };
+
+                websocket.onmessage = async (event) => {
+                    console.log('WebSocket message received:', {
+                        type: typeof event.data,
+                        isBlob: event.data instanceof Blob,
+                        size: event.data instanceof Blob ? event.data.size : event.data.length
+                    });
+
+                    // Handle text messages (transcripts or base64 audio)
+                    if (typeof event.data === 'string') {
+                        try {
+                            const message = JSON.parse(event.data);
+                            console.log('Parsed JSON message:', message);
+                            if (message.type === 'transcript') {
+                                addTranscriptMessage(message.role, message.text);
+                            }
+                        } catch (e) {
+                            // Not JSON - might be base64 encoded audio
+                            console.log('Non-JSON string, checking if base64 audio...');
+                            
+                            // Check if it looks like base64 (only contains valid base64 chars)
+                            if (/^[A-Za-z0-9+/=]+$/.test(event.data)) {
+                                console.log('Detected base64 audio data, length:', event.data.length);
+                                try {
+                                    // Decode base64 to binary
+                                    const binaryString = atob(event.data);
+                                    const bytes = new Uint8Array(binaryString.length);
+                                    for (let i = 0; i < binaryString.length; i++) {
+                                        bytes[i] = binaryString.charCodeAt(i);
+                                    }
+                                    
+                                    // Create blob with WAV mime type
+                                    const audioBlob = new Blob([bytes], { type: 'audio/wav' });
+                                    console.log('Converted to audio blob, size:', audioBlob.size);
+                                    
+                                    // Add to queue instead of playing immediately
+                                    audioQueue.push(audioBlob);
+                                    processAudioQueue();
+                                } catch (decodeError) {
+                                    console.error('Failed to decode base64 audio:', decodeError);
+                                }
+                            } else {
+                                console.log('Unknown text message format');
+                            }
+                        }
+                    }
+                    // Handle incoming audio from bot (binary)
+                    else if (event.data instanceof Blob) {
+                        console.log('Received audio blob, size:', event.data.size, 'type:', event.data.type);
+                        audioQueue.push(event.data);
+                        processAudioQueue();
+                    }
+                };
+
+                websocket.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    showError('Connection error occurred');
+                    cleanup();
+                };
+
+                websocket.onclose = () => {
+                    console.log('WebSocket closed');
+                    cleanup();
+                };
+
+            } catch (error) {
+                console.error('Error starting call:', error);
+                showError('Failed to start call: ' + error.message);
+                startBtn.disabled = false;
+                statusIcon.textContent = '❌';
+                statusText.textContent = 'Connection failed';
+                statusSubtext.textContent = 'Please try again';
+            }
+        }
+
+        function startAudioStreaming(stream) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+            const source = audioContext.createMediaStreamSource(stream);
+            const processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+            source.connect(processor);
+            processor.connect(audioContext.destination);
+
+            let audioChunkCount = 0;
+
+            processor.onaudioprocess = (e) => {
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    const audioData = e.inputBuffer.getChannelData(0);
+                    // Convert Float32Array to Int16Array (PCM 16-bit) for transmission
+                    const int16Data = new Int16Array(audioData.length);
+                    for (let i = 0; i < audioData.length; i++) {
+                        const s = Math.max(-1, Math.min(1, audioData[i]));
+                        int16Data[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                    }
+                    
+                    // Send as binary data
+                    websocket.send(int16Data.buffer);
+                    
+                    audioChunkCount++;
+                    if (audioChunkCount === 1 || audioChunkCount % 50 === 0) {
+                        console.log('Audio chunk sent:', audioChunkCount, 'size:', int16Data.buffer.byteLength);
+                    }
+                }
+            };
+
+            console.log('Audio streaming started, sample rate:', audioContext.sampleRate);
+        }
+
+        async function playAudioScheduled(audioBlob) {
+            try {
+                console.log('playAudioScheduled called with blob size:', audioBlob.size);
+                
+                // Create audio context if not exists
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    nextPlayTime = audioContext.currentTime;
+                    console.log('Audio context created with sample rate:', audioContext.sampleRate);
+                }
+
+                // Resume audio context if suspended
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                }
+
+                // Convert blob to array buffer
+                const arrayBuffer = await audioBlob.arrayBuffer();
+                
+                // Check if it's raw PCM
+                const dataView = new DataView(arrayBuffer);
+                const isWav = dataView.byteLength > 4 && 
+                             String.fromCharCode(dataView.getUint8(0), dataView.getUint8(1), 
+                                               dataView.getUint8(2), dataView.getUint8(3)) === 'RIFF';
+                
+                let audioBuffer;
+                
+                if (isWav) {
+                    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                } else {
+                    // Raw PCM - convert to audio buffer
+                    const int16Array = new Int16Array(arrayBuffer);
+                    const float32Array = new Float32Array(int16Array.length);
+                    
+                    for (let i = 0; i < int16Array.length; i++) {
+                        float32Array[i] = int16Array[i] / 32768.0;
+                    }
+                    
+                    // Try 24kHz (Deepgram default)
+                    const sourceSampleRate = 24000;
+                    audioBuffer = audioContext.createBuffer(1, float32Array.length, sourceSampleRate);
+                    audioBuffer.getChannelData(0).set(float32Array);
+                }
+                
+                // Schedule playback for gapless audio
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioContext.destination);
+                
+                // Schedule at the next play time
+                if (nextPlayTime < audioContext.currentTime) {
+                    nextPlayTime = audioContext.currentTime;
+                }
+                
+                source.start(nextPlayTime);
+                console.log('Audio scheduled at:', nextPlayTime, 'duration:', audioBuffer.duration);
+                
+                // Update next play time
+                nextPlayTime += audioBuffer.duration;
+                
+                return audioBuffer.duration;
+            } catch (err) {
+                console.error('Error playing audio:', err);
+                return 0;
+            }
+        }
+
+        async function playAudio(audioBlob) {
+            try {
+                console.log('playAudio called with blob size:', audioBlob.size, 'type:', audioBlob.type);
+                
+                // Create audio context if not exists (use default sample rate, not forced 16kHz)
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    console.log('Audio context created with sample rate:', audioContext.sampleRate);
+                }
+
+                // Resume audio context if suspended (browser autoplay policy)
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                    console.log('Audio context resumed');
+                }
+
+                // Convert blob to array buffer
+                const arrayBuffer = await audioBlob.arrayBuffer();
+                console.log('Array buffer size:', arrayBuffer.byteLength);
+                
+                // Check if it's raw PCM (no WAV header)
+                const dataView = new DataView(arrayBuffer);
+                const isWav = dataView.byteLength > 4 && 
+                             String.fromCharCode(dataView.getUint8(0), dataView.getUint8(1), 
+                                               dataView.getUint8(2), dataView.getUint8(3)) === 'RIFF';
+                
+                let audioBuffer;
+                
+                if (isWav) {
+                    // It's a WAV file, decode normally
+                    console.log('Detected WAV format');
+                    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                } else {
+                    // It's raw PCM, manually create audio buffer
+                    console.log('Detected raw PCM format, converting...');
+                    
+                    // Deepgram TTS typically outputs 16-bit PCM at 24kHz or 16kHz
+                    // Try to detect the actual sample rate from the data
+                    const int16Array = new Int16Array(arrayBuffer);
+                    const float32Array = new Float32Array(int16Array.length);
+                    
+                    // Convert Int16 to Float32 (-1.0 to 1.0)
+                    for (let i = 0; i < int16Array.length; i++) {
+                        float32Array[i] = int16Array[i] / 32768.0;
+                    }
+                    
+                    // Deepgram typically uses 24kHz for TTS
+                    const sourceSampleRate = 24000;
+                    
+                    // Create audio buffer with source sample rate
+                    audioBuffer = audioContext.createBuffer(1, float32Array.length, sourceSampleRate);
+                    audioBuffer.getChannelData(0).set(float32Array);
+                }
+                
+                console.log('Audio decoded successfully:', audioBuffer.duration, 'seconds, sample rate:', audioBuffer.sampleRate);
+                
+                // Create source and play
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioContext.destination);
+                source.start(0);
+                
+                console.log('Audio playback started');
+                
+                // Return promise that resolves when audio finishes
+                return new Promise((resolve) => {
+                    source.onended = () => {
+                        console.log('Audio playback finished');
+                        resolve();
+                    };
+                });
+            } catch (err) {
+                console.error('Error playing audio:', err);
+                // Fallback to simple audio element (only works for WAV)
+                try {
+                    console.log('Trying fallback audio element...');
+                    const audio = new Audio(URL.createObjectURL(audioBlob));
+                    await audio.play();
+                    console.log('Fallback audio playing');
+                } catch (fallbackErr) {
+                    console.error('Fallback audio play failed:', fallbackErr);
+                }
+            }
+        }
+
+        function addTranscriptMessage(role, text) {
+            const messagesContainer = document.getElementById('transcriptMessages');
+            
+            // Remove empty state if present
+            const emptyState = messagesContainer.querySelector('.transcript-empty');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            // Create message element
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const roleLabel = role === 'user' ? 'You' : 'Alex (Bot)';
+            messageDiv.innerHTML = `
+                <div class="message-role">${roleLabel}</div>
+                <div class="message-text">${escapeHtml(text)}</div>
+            `;
+
+            messagesContainer.appendChild(messageDiv);
+            
+            // Auto-scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function clearTranscript() {
+            const messagesContainer = document.getElementById('transcriptMessages');
+            messagesContainer.innerHTML = '<div class="transcript-empty">Conversation transcript will appear here once you start the call...</div>';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function endCall() {
+            if (websocket) {
+                websocket.close();
+            }
+            cleanup();
+        }
+
+        function cleanup() {
+            if (websocket) {
+                websocket.close();
+                websocket = null;
+            }
+
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('endBtn').style.display = 'none';
+            document.getElementById('statusIcon').textContent = '✅';
+            document.getElementById('statusText').textContent = 'Call ended';
+            document.getElementById('statusSubtext').textContent = 'Thank you for registering!';
+        }
+
+        function showError(message) {
+            const errorBox = document.getElementById('errorBox');
+            errorBox.textContent = message;
+            errorBox.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

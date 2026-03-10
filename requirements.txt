@@ -1,0 +1,29 @@
+# FastAPI + ASGI
+fastapi
+uvicorn[standard]
+
+# Database
+asyncpg
+sqlalchemy[asyncio]>=2.0.0
+alembic
+
+# Settings
+pydantic-settings
+
+# Google Gemini
+google-genai
+
+# Logging
+structlog
+
+# HTTP Client
+httpx
+
+# WebSocket client
+websockets
+
+# Pipecat - Voice AI Framework
+pipecat-ai[deepgram]
+
+# Speech Services (free tier options)
+deepgram-sdk
